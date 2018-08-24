@@ -66,8 +66,20 @@ wget.callbacks.download_child_p = function(urlpos, parent, depth, start_url_pars
     return false
   end
 
-  if (downloaded[url] ~= true and addedtolist[url] ~= true)
-     and (allowed(url, parent["url"]) or html == 0) then
+  -- Because the post-redirect URL is already in `downloaded`, this function would return false for it,
+  -- which causes wget to not retrieve (or even consider retrieving) any URLs found on the page unless
+  -- they're added explicitly in get_urls. It would therefore miss all page requisites, for example.
+  -- As a workaround, we let this function return true for a thread URL which has our made-up "x.ID"
+  -- URL as a parent (which should only happen for the initial redirects).
+  if (
+       string.match(parent["url"], "^https?://www%.jamiiforums%.com/threads/x%.%d+/$")
+       and string.match(url, "^https?://www%.jamiiforums%.com/threads/[^/]*%.%d+/$")
+     )
+     or
+     (
+       (downloaded[url] ~= true and addedtolist[url] ~= true)
+       and (allowed(url, parent["url"]) or html == 0)
+     ) then
     addedtolist[url] = true
     return true
   end
