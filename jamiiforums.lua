@@ -47,7 +47,11 @@ allowed = function(url, parenturl)
     return false
   end
 
-  if (item_type == "threads") and (string.match(url, "^https?://www%.jamiiforums%.com/threads/") or string.match(url, "^https?://www%.jamiiforums%.com/posts/")) then
+  if (item_type == "threads") and (
+       string.match(url, "^https?://www%.jamiiforums%.com/threads/")
+       or string.match(url, "^https?://www%.jamiiforums%.com/posts/")
+       or string.match(url, "^https?://www%.jamiiforums%.com/goto/post%?id=")
+      ) then
     for id in string.gmatch(url, "([0-9]+)") do
       if ids[tonumber(id)] == true then
         return true
@@ -143,6 +147,7 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
       for post in string.gmatch(html, 'id="post%-(%d+)"') do
         ids[tonumber(post)] = true
         check("https://www.jamiiforums.com/posts/" .. post .. "/")
+        check("https://www.jamiiforums.com/goto/post?id=" .. post)
       end
     end
 
@@ -181,7 +186,12 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
     downloaded[string.gsub(url["url"], "https?://", "http://")] = true
   end
 
-  if status_code == 301 and (string.match(url["url"], "^https?://www%.jamiiforums%.com/threads/.*%.%d+/post%-%d+$") or string.match(url["url"], "^https?://www%.jamiiforums%.com/posts/%d+/$")) then
+  if status_code == 301
+     and (
+       string.match(url["url"], "^https?://www%.jamiiforums%.com/threads/.*%.%d+/post%-%d+$")
+       or string.match(url["url"], "^https?://www%.jamiiforums%.com/posts/%d+/$")
+       or string.match(url["url"], "^https?://www%.jamiiforums%.com/goto/post%?id=%d+$")
+     ) then
     -- Redirects back to the thread page, which we already grabbed.
     return wget.actions.EXIT
   end
